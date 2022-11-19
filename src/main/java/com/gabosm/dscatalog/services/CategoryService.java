@@ -1,6 +1,5 @@
 package com.gabosm.dscatalog.services;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -8,6 +7,8 @@ import javax.persistence.EntityNotFoundException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,10 +25,10 @@ public class CategoryService {
 	private CategoryRepository repository;
 	
 	@Transactional(readOnly = true)
-	public List<CategoryDTO> findAll() {
-		List<Category> listCategory = repository.findAll();
+	public Page<CategoryDTO> findAllPaged(PageRequest pageRequest) {
+		Page<Category> listCategory = repository.findAll(pageRequest);
 	
-		return listCategory.stream().map(x -> new CategoryDTO(x)).collect(Collectors.toList());
+		return listCategory.map(x -> new CategoryDTO(x));
 	}
 
 	@Transactional(readOnly = true)
