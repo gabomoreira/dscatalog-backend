@@ -11,8 +11,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.gabosm.dscatalog.dto.CategoryDTO;
 import com.gabosm.dscatalog.dto.ProductDTO;
+import com.gabosm.dscatalog.entities.Category;
 import com.gabosm.dscatalog.entities.Product;
+import com.gabosm.dscatalog.repositories.CategoryRepository;
 import com.gabosm.dscatalog.repositories.ProductRepository;
 import com.gabosm.dscatalog.services.exceptions.DatabaseException;
 import com.gabosm.dscatalog.services.exceptions.ResourceNotFoundException;
@@ -22,6 +25,9 @@ public class ProductService {
 	
 	@Autowired
 	private ProductRepository repository;
+	
+	@Autowired
+	private CategoryRepository categoryRepository;
 	
 	@Transactional(readOnly = true)
 	public Page<ProductDTO> findAllPaged(PageRequest pageRequest) {
@@ -36,28 +42,24 @@ public class ProductService {
 		return new ProductDTO(product, product.getCategories());
 	}
 	
-	@Transactional(readOnly = true)
+	@Transactional
 	public ProductDTO insert(ProductDTO dto) {
 		Product product = new Product();
-		product.setName(dto.getName());
-		product.setPrice(dto.getPrice());
-		product.setDescription(dto.getDesciption());
-		product.setImgUrl(dto.getImgUrl());
-		product.setDate(dto.getDate());
+		copyDtoToEntity(dto, product);
 		product = repository.save(product);
+		
 		return new ProductDTO(product);
 	}
 	
-	@Transactional(readOnly = true)
+
+	@Transactional
 	public ProductDTO update(Long id, ProductDTO dto) {
 		try {
 			Product product = repository.getReferenceById(id);
-			product.setName(dto.getName());
-			product.setPrice(dto.getPrice());
-			product.setDescription(dto.getDesciption());
-			product.setImgUrl(dto.getImgUrl());
-			product.setDate(dto.getDate());
+			copyDtoToEntity(dto, product);
 			product = repository.save(product);
+			
+			
 			return new ProductDTO(product);
 		} catch (EntityNotFoundException e) {
 			throw new ResourceNotFoundException("Id not found "+ id);
@@ -72,5 +74,23 @@ public class ProductService {
 		} catch (EmptyResultDataAccessException e) {
 			throw new DatabaseException("Integration violeded");
 		}
+	}
+	
+	private Product copyDtoToEntity(ProductDTO dto, Product entity) {
+		entity.setName(dto.getName());
+		entity.setPrice(dto.getPrice());
+		entity.setDescription(dto.getDesciption());
+		entity.setImgUrl(dto.getImgUrl());
+		entity.setDate(dto.getDate());
+		
+		entity.getCategories().clear();
+		
+		for (CategoryDTO catDTO : dto.getCategories()) {
+			Category category = categoryRepository.getOne(catDTO.getId());
+			entity.getCategories().add(category);
+		}
+		
+		return repository.save(entity);
+
 	}
 }
