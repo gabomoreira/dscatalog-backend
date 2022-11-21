@@ -17,6 +17,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -45,7 +46,7 @@ public class ProductServiceTests {
 	@BeforeEach
 	void setUp() throws Exception {
 		existingId = 1L;
-		noExistingId = 2;	
+		noExistingId = 1000L;	
 		dependentId = 3L;
 		product = Factory.createProduct();
 		page = new PageImpl<>(List.of(product));
@@ -58,6 +59,35 @@ public class ProductServiceTests {
 		Mockito.doNothing().when(repository).deleteById(existingId);
 		Mockito.doThrow(EmptyResultDataAccessException.class).when(repository).deleteById(noExistingId);
 		Mockito.doThrow(DataIntegrityViolationException.class).when(repository).deleteById(dependentId);
+	}
+	
+	@Test
+	public void findByIdShouldThrowResourceNotFoundExceptionWhenNoExistsId() {
+	
+		Assertions.assertThrows(ResourceNotFoundException.class, () ->{
+			service.findById(noExistingId);
+		});
+		Mockito.verify(repository).findById(noExistingId);
+	}	
+	
+	@Test
+	public void findByIdShouldReturnProductDTO() {
+
+		ProductDTO dto = service.findById(existingId);
+	
+		Assertions.assertNotNull(dto);
+		Mockito.verify(repository).findById(existingId);
+	}	
+	
+	@Test
+	public void findAllPagedShouldReturnPage() {
+		
+		Pageable pageable = PageRequest.of(0, 10);
+		
+		Page<ProductDTO> result = service.findAllPaged(pageable);
+	
+		Assertions.assertNotNull(result);
+		Mockito.verify(repository).findAll(pageable);
 	}
 	
 	@Test
