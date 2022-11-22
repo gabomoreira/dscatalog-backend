@@ -60,7 +60,6 @@ public class ProductService {
 			copyDtoToEntity(dto, product);
 			product = repository.save(product);
 			
-			
 			return new ProductDTO(product);
 		} catch (EntityNotFoundException e) {
 			throw new ResourceNotFoundException("Id not found "+ id);
@@ -77,7 +76,7 @@ public class ProductService {
 		}
 	}
 	
-	private Product copyDtoToEntity(ProductDTO dto, Product entity) {
+	private void copyDtoToEntity(ProductDTO dto, Product entity) {
 		entity.setName(dto.getName());
 		entity.setPrice(dto.getPrice());
 		entity.setDescription(dto.getDesciption());
@@ -87,11 +86,9 @@ public class ProductService {
 		entity.getCategories().clear();
 		
 		for (CategoryDTO catDTO : dto.getCategories()) {
-			Category category = categoryRepository.getOne(catDTO.getId());
+			Category category = categoryRepository.getReferenceById(catDTO.getId());
 			entity.getCategories().add(category);
 		}
-		
-		return repository.save(entity);
 
 	}
 }
